@@ -1,5 +1,5 @@
 {
-  "name": ".",
+  "name": "SMARTPot",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
@@ -7,6 +7,7 @@
     "android": "expo start -c --android",
     "ios": "expo start -c --ios",
     "web": "expo start -c --web",
+    "pod-install": "cd ios && RCT_NEW_ARCH_ENABLED=1 pod install",
     "clean": "rm -rf .expo node_modules"
   },
   "dependencies": {
@@ -39,10 +40,12 @@
     "react-native-worklets": "0.5.1",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^3.4.14",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "toastify-react-native": "^7.2.3"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
+    "@react-native-community/cli": "latest",
     "@types/react": "~19.1.10",
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.6.14",

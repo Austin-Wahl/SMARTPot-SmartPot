@@ -1,9 +1,11 @@
 import TeamMember from '@/components/custom/team-member';
+import { Button } from '@/components/ui/button';
+import { Text } from '@/components/ui/text';
 import { ITeamMember } from '@/types';
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
+import { House } from 'lucide-react-native';
 import React from 'react';
 import { ScrollView, View } from 'react-native';
-
 const teamMembers: Array<ITeamMember> = [
   {
     name: 'Austin Wahl',

@@ -6,8 +6,9 @@ import { PortalHost } from '@rn-primitives/portal';
 import { SplashScreen, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'nativewind';
-import React, { useEffect } from 'react';
-import { useFonts } from 'expo-font';
+import React from 'react';
+import ToastManager from 'toastify-react-native';
+
 export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary,
@@ -24,6 +25,7 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="team/index" options={{ title: 'Team' }} />
       </Stack>
+      <ToastManager />
       <PortalHost />
     </ThemeProvider>
   );
