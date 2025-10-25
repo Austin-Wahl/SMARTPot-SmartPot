@@ -16,7 +16,7 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.austinwahl"
+      "bundleIdentifier": "dev.austinwahl"
     },
     "android": {
       "edgeToEdgeEnabled": true,
