@@ -1,6 +1,7 @@
 import '@/global.css';
 
 import { NAV_THEME } from '@/lib/theme';
+import BLEContext from '@/providers/ble-context';
 import { ThemeProvider } from '@react-navigation/native';
 import { PortalHost } from '@rn-primitives/portal';
 import { SplashScreen, Stack } from 'expo-router';
@@ -21,12 +22,15 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
-      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-      <Stack>
-        <Stack.Screen name="team/index" options={{ title: 'Team' }} />
-      </Stack>
-      <ToastManager />
-      <PortalHost />
+      <BLEContext>
+        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+        <Stack>
+          <Stack.Screen name="team/index" options={{ title: 'Team' }} />
+          {/* <Stack.Screen name="device" options={{ headerShown: false }} /> */}
+        </Stack>
+        <ToastManager />
+        <PortalHost />
+      </BLEContext>
     </ThemeProvider>
   );
 }
