@@ -15,7 +15,7 @@ export type TDeviceConnectionStatus =
   | 'Disconnecting'
   | 'Disconnected';
 
-export type TCharacteristics = 'read-humidity';
+export type TCharacteristics = 'read';
 
 export interface IUseBluetoothLE {
   reconnect: (deviceId: string) => Promise<boolean>;
@@ -37,3 +37,29 @@ export interface IUseBluetoothLE {
   SERVICE_UUID: string;
   CHARACTERISTIC_MAP: Record<TCharacteristics, string>;
 }
+
+export interface ISensorData {
+  name: TSensorNames;
+  id: string;
+  connected: boolean;
+  data:
+    | ITemperatureAndHumiditySensorData
+    | ISoilMoistureAndTemperatureSensorData
+    | ILightSensorData;
+}
+
+export interface ITemperatureAndHumiditySensorData {
+  humidity: number | null;
+  temperature: number | null;
+}
+
+export type TSoilMoistureLevels = 'Very Dry' | 'Dry' | 'Damp' | 'Wet' | 'Very Wet' | 'Saturated';
+export interface ISoilMoistureAndTemperatureSensorData {
+  moisture: number | null;
+  temperature: number | null;
+}
+
+export interface ILightSensorData {
+  light: number | null;
+}
+export type TSensorNames = 'Humidity and Temperature' | 'Light' | 'Soil Moisture';

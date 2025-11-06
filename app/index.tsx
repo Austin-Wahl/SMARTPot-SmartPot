@@ -1,5 +1,4 @@
 import PotDevice from '@/components/custom/pot-device';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -14,16 +13,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Text } from '@/components/ui/text';
 import useBluetoothLE from '@/hooks/useBluetoothLE';
-import { DeviceWithLastSeen } from '@/types';
 import { useFonts } from 'expo-font';
 import { Link, SplashScreen, Stack } from 'expo-router';
 import { ExtendedStackNavigationOptions } from 'expo-router/build/layouts/StackClient';
-import { AlertCircle, Cog, Flower, Loader2, Moon, RotateCcw, Sun } from 'lucide-react-native';
+import { Cog, Flower, Loader2, Moon, RotateCcw, Sun } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { type ImageStyle, Platform, RefreshControl, ScrollView, View } from 'react-native';
-import { BleError, Device, State } from 'react-native-ble-plx';
+import { useEffect } from 'react';
+import { Platform, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const SCREEN_OPTIONS: ExtendedStackNavigationOptions = {

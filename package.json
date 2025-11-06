@@ -8,7 +8,8 @@
     "ios": "expo start -c --ios",
     "web": "expo start -c --web",
     "pod-install": "cd ios && RCT_NEW_ARCH_ENABLED=1 pod install",
-    "clean": "rm -rf .expo node_modules"
+    "clean": "rm -rf .expo node_modules",
+    "pods": "PATH=/opt/homebrew/lib/ruby/gems/3.4.0/bin:$PATH pod install"
   },
   "dependencies": {
     "@react-navigation/native": "^7.0.0",

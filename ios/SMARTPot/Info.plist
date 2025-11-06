@@ -28,7 +28,7 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>.</string>
-          <string>com.austinwahl</string>
+          <string>dev.austinwahl</string>
         </array>
       </dict>
       <dict>

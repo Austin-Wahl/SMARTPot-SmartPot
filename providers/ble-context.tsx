@@ -11,7 +11,7 @@ import { Toast } from 'toastify-react-native';
 
 const SERVICE_UUID = '6360ec7b-a2b6-41d2-87c6-be45caf92838';
 const CHARACTERISTIC_MAP: Record<TCharacteristics, string> = {
-  'read-humidity': '46f45f15-b963-4e4e-bde9-6a9a677df4b4',
+  read: '46f45f15-b963-4e4e-bde9-6a9a677df4b4',
 };
 
 const SCAN_DURATION_MS = 10000;
