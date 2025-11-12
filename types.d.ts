@@ -15,27 +15,29 @@ export type TDeviceConnectionStatus =
   | 'Disconnecting'
   | 'Disconnected';
 
-export type TCharacteristics = 'read';
+export type TCharacteristics = 'read' | 'sendConfig' | 'notification' | 'readId';
 
 export interface IUseBluetoothLE {
-  reconnect: (deviceId: string) => Promise<boolean>;
   requestPermissions: () => Promise<boolean>;
   bleManager: BleManager;
   detectedSmartPots: Array<Device>;
-  startDeviceScan: () => Promise<void>;
-  refreshDevices: () => Promise<void>;
   status: 'scanning' | 'finished' | 'idle' | 'error';
   disconnect: (device: Device) => Promise<Device | null>;
   connect: (
     deviceId: string,
     onConnect?: ((device: Device) => void) | null,
     hideErrors?: boolean
-  ) => Promise<boolean>;
+  ) => Promise<Device | null>;
   connectionStatus: TDeviceConnectionStatus;
   connectedDevice: Device | null;
-  onConnectionDropped: (cb: (dev: Device | null) => void) => () => void;
+  detectedSmartPots: Array<DeviceWithLastSeen>;
+  onConnectionDropped: (cb: (dev: Device | null) => Promise<void>) => () => Promise<void>;
   SERVICE_UUID: string;
   CHARACTERISTIC_MAP: Record<TCharacteristics, string>;
+  init: () => void;
+  stopDeviceScan: () => void;
+  reconnect: (deviceId: string) => Promise<boolean>;
+  connectedDeviceRef: Device | null;
 }
 
 export interface ISensorData {
@@ -63,3 +65,26 @@ export interface ILightSensorData {
   light: number | null;
 }
 export type TSensorNames = 'Humidity and Temperature' | 'Light' | 'Soil Moisture';
+
+export interface ISyncPlant {
+  deviceName: string;
+  plant: string;
+  mes_sys: number;
+}
+
+export interface ILocalSMARTPotStore extends ISyncPlant {
+  id: string;
+}
+
+export interface NotificationAddDevice {
+  error: string | 0;
+  success: boolean;
+}
+
+export interface ILocalStoragePlantRecord {
+  id: string;
+  name: string;
+  addedAt: number;
+  measurementSystem: 0 | 1;
+  plant: string;
+}

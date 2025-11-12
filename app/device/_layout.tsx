@@ -1,19 +1,33 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Text } from '@/components/ui/text';
 import useBluetoothLE from '@/hooks/useBluetoothLE';
-import { Slot, useNavigation } from 'expo-router';
+import { Slot, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { AlertCircleIcon, Loader2 } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { View } from 'react-native';
 
 const DeviceLayout = () => {
-  const { reconnect, connectedDevice, onConnectionDropped, connectionStatus } = useBluetoothLE();
+  const { reconnect, connectedDevice, onConnectionDropped, connectionStatus, connect, disconnect } =
+    useBluetoothLE();
+  const params = useLocalSearchParams();
   const navigation = useNavigation();
   const { colorScheme } = useColorScheme();
   const [reconnectSuccess, setReconnectSuccess] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
+    const deviceId = params['deviceId'];
+    if (deviceId == undefined) router.back();
+
+    async function establishConnection() {
+      if (connectedDevice && connectedDevice.id != deviceId) {
+        await disconnect(connectedDevice);
+      }
+      await connect(deviceId as string);
+    }
+    establishConnection();
+
     const unsub = onConnectionDropped(async (device) => {
       if (!device) return;
       const conStat = await reconnect(device.id);

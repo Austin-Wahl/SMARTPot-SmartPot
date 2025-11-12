@@ -1,0 +1,212 @@
+{
+  "Generic": {
+    "temperatureMin": 15.6,
+    "temperatureMax": 26.7,
+    "humidityMin": 40,
+    "humidityMax": 70,
+    "lightMin": 5000,
+    "lightMax": 15000,
+    "soilMoistureMin": 830,
+    "soilMoistureMax": 1280
+  },
+  "Pothos (Golden)": {
+    "temperatureMin": 18,
+    "temperatureMax": 29,
+    "humidityMin": 40,
+    "humidityMax": 70,
+    "lightMin": 5000,
+    "lightMax": 15000,
+    "soilMoistureMin": 830,
+    "soilMoistureMax": 1280
+  },
+  "Snake Plant": {
+    "temperatureMin": 16,
+    "temperatureMax": 29,
+    "humidityMin": 30,
+    "humidityMax": 50,
+    "lightMin": 2000,
+    "lightMax": 10000,
+    "soilMoistureMin": 560,
+    "soilMoistureMax": 920
+  },
+  "Spider Plant": {
+    "temperatureMin": 18,
+    "temperatureMax": 27,
+    "humidityMin": 40,
+    "humidityMax": 70,
+    "lightMin": 4000,
+    "lightMax": 12000,
+    "soilMoistureMin": 830,
+    "soilMoistureMax": 1280
+  },
+  "Peace Lily": {
+    "temperatureMin": 20,
+    "temperatureMax": 29,
+    "humidityMin": 50,
+    "humidityMax": 80,
+    "lightMin": 5000,
+    "lightMax": 12000,
+    "soilMoistureMin": 1010,
+    "soilMoistureMax": 1460
+  },
+  "Aloe Vera": {
+    "temperatureMin": 16,
+    "temperatureMax": 29,
+    "humidityMin": 20,
+    "humidityMax": 50,
+    "lightMin": 10000,
+    "lightMax": 25000,
+    "soilMoistureMin": 470,
+    "soilMoistureMax": 740
+  },
+  "Monstera Deliciosa": {
+    "temperatureMin": 18,
+    "temperatureMax": 29,
+    "humidityMin": 60,
+    "humidityMax": 80,
+    "lightMin": 6000,
+    "lightMax": 15000,
+    "soilMoistureMin": 920,
+    "soilMoistureMax": 1370
+  },
+  "Fiddle Leaf Fig": {
+    "temperatureMin": 18,
+    "temperatureMax": 27,
+    "humidityMin": 40,
+    "humidityMax": 60,
+    "lightMin": 8000,
+    "lightMax": 20000,
+    "soilMoistureMin": 830,
+    "soilMoistureMax": 1190
+  },
+  "Basil": {
+    "temperatureMin": 21,
+    "temperatureMax": 32,
+    "humidityMin": 40,
+    "humidityMax": 70,
+    "lightMin": 15000,
+    "lightMax": 25000,
+    "soilMoistureMin": 1010,
+    "soilMoistureMax": 1460
+  },
+  "Mint": {
+    "temperatureMin": 18,
+    "temperatureMax": 29,
+    "humidityMin": 50,
+    "humidityMax": 70,
+    "lightMin": 10000,
+    "lightMax": 20000,
+    "soilMoistureMin": 1100,
+    "soilMoistureMax": 1550
+  },
+  "Rosemary": {
+    "temperatureMin": 16,
+    "temperatureMax": 27,
+    "humidityMin": 30,
+    "humidityMax": 60,
+    "lightMin": 15000,
+    "lightMax": 30000,
+    "soilMoistureMin": 650,
+    "soilMoistureMax": 1010
+  },
+  "Lavender": {
+    "temperatureMin": 16,
+    "temperatureMax": 27,
+    "humidityMin": 30,
+    "humidityMax": 50,
+    "lightMin": 20000,
+    "lightMax": 30000,
+    "soilMoistureMin": 470,
+    "soilMoistureMax": 830
+  },
+  "Fern (Boston)": {
+    "temperatureMin": 18,
+    "temperatureMax": 27,
+    "humidityMin": 60,
+    "humidityMax": 90,
+    "lightMin": 4000,
+    "lightMax": 10000,
+    "soilMoistureMin": 1100,
+    "soilMoistureMax": 1550
+  },
+  "English Ivy": {
+    "temperatureMin": 10,
+    "temperatureMax": 24,
+    "humidityMin": 40,
+    "humidityMax": 65,
+    "lightMin": 6000,
+    "lightMax": 15000,
+    "soilMoistureMin": 920,
+    "soilMoistureMax": 1280
+  },
+  "Succulent (generic)": {
+    "temperatureMin": 16,
+    "temperatureMax": 32,
+    "humidityMin": 20,
+    "humidityMax": 40,
+    "lightMin": 15000,
+    "lightMax": 30000,
+    "soilMoistureMin": 380,
+    "soilMoistureMax": 650
+  },
+  "Cactus": {
+    "temperatureMin": 18,
+    "temperatureMax": 35,
+    "humidityMin": 10,
+    "humidityMax": 30,
+    "lightMin": 20000,
+    "lightMax": 40000,
+    "soilMoistureMin": 290,
+    "soilMoistureMax": 560
+  },
+  "Orchid (Phalaenopsis)": {
+    "temperatureMin": 18,
+    "temperatureMax": 29,
+    "humidityMin": 50,
+    "humidityMax": 80,
+    "lightMin": 8000,
+    "lightMax": 15000,
+    "soilMoistureMin": 920,
+    "soilMoistureMax": 1370
+  },
+  "Calathea": {
+    "temperatureMin": 18,
+    "temperatureMax": 29,
+    "humidityMin": 60,
+    "humidityMax": 90,
+    "lightMin": 4000,
+    "lightMax": 10000,
+    "soilMoistureMin": 1010,
+    "soilMoistureMax": 1460
+  },
+  "Aloe Aristata": {
+    "temperatureMin": 13,
+    "temperatureMax": 27,
+    "humidityMin": 20,
+    "humidityMax": 50,
+    "lightMin": 12000,
+    "lightMax": 25000,
+    "soilMoistureMin": 380,
+    "soilMoistureMax": 650
+  },
+  "ZZ Plant": {
+    "temperatureMin": 16,
+    "temperatureMax": 27,
+    "humidityMin": 30,
+    "humidityMax": 50,
+    "lightMin": 4000,
+    "lightMax": 10000,
+    "soilMoistureMin": 740,
+    "soilMoistureMax": 1010
+  },
+  "Peace Lily (Spathiphyllum)": {
+    "temperatureMin": 20,
+    "temperatureMax": 29,
+    "humidityMin": 50,
+    "humidityMax": 80,
+    "lightMin": 6000,
+    "lightMax": 12000,
+    "soilMoistureMin": 920,
+    "soilMoistureMax": 1370
+  }
+}

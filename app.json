@@ -37,6 +37,12 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      [
+        "expo-asset",
+        {
+          "assets": ["./assets/images/splash.png"]
+        }
+      ],
       "expo-router",
       [
         "expo-dev-client",
@@ -57,7 +63,8 @@
         {
           "fonts": ["./assets/fonts//Quicksand/Quicksand-VariableFont_wght.ttf"]
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true

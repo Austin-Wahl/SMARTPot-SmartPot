@@ -12,6 +12,9 @@ import { Toast } from 'toastify-react-native';
 const SERVICE_UUID = '6360ec7b-a2b6-41d2-87c6-be45caf92838';
 const CHARACTERISTIC_MAP: Record<TCharacteristics, string> = {
   read: '46f45f15-b963-4e4e-bde9-6a9a677df4b4',
+  sendConfig: 'b645f869-3e5d-45ef-b1b6-2c17e0abe75c',
+  notification: 'fcd0c4ed-e302-4adc-9f50-71f0de4e6045',
+  readId: '4556f68a-e305-4ad2-aa34-e702e53a4b11',
 };
 
 const SCAN_DURATION_MS = 10000;
@@ -86,40 +89,221 @@ const requestPermissions = async (): Promise<boolean> => {
 export const bleContext = createContext<IUseBluetoothLE>({
   bleManager: bleManager,
   requestPermissions: async () => false,
-  detectedSmartPots: [],
-  startDeviceScan: async () => {},
-  refreshDevices: async () => {},
   status: 'idle',
   disconnect: async (_device: Device) => null,
   connect: async (
-    deviceId: string,
-    onConnect?: ((device: Device) => void) | null,
-    hideErrors: boolean = false
-  ): Promise<boolean> => {
-    return new Promise((resolve) => resolve(true));
-  },
-  reconnect: async (deviceId: string): Promise<boolean> => {
-    return new Promise((resolve) => resolve(true));
+    _deviceId: string,
+    _onConnect?: ((device: Device) => void) | null,
+    _hideErrors: boolean = false
+  ): Promise<Device | null> => {
+    return new Promise((resolve) => resolve(null));
   },
   connectionStatus: 'Disconnected',
-  connectedDevice: null,
+  detectedSmartPots: [],
   onConnectionDropped: () => {
-    return () => {};
+    return async () => {};
   },
   SERVICE_UUID,
   CHARACTERISTIC_MAP: CHARACTERISTIC_MAP,
+  init: () => false,
+  stopDeviceScan: () => {},
+  connectedDevice: null,
+  reconnect: async (_deviceId: string) => new Promise((resolve) => resolve(true)),
+  connectedDeviceRef: null,
 });
 
+const STALE_DEVICE_TIMEOUT_MS = 5_000;
+const SCAN_TIMEOUT = 10_000;
+const CLEANUP_INTERVAL = 2_500;
+
 const BLEContext = ({ children }: { children: ReactNode }) => {
-  const [detectedSmartPots, setDetectedSmartPots] = useState<Array<DeviceWithLastSeen>>([]);
-  const [status, setStatus] = useState<'scanning' | 'finished' | 'idle' | 'error'>('idle');
   const [connectionStatus, setConnectionStatus] = useState<TDeviceConnectionStatus>('Disconnected');
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
-  const disconnectCallbackRef = useRef<null | ((dev: Device | null) => void)>(null);
+  const disconnectCallbackRef = useRef<null | ((dev: Device | null) => Promise<void>)>(null);
+  const [detectedSmartPots, setDetectedSmartPots] = useState<DeviceWithLastSeen[]>([]);
 
-  const scanTimeoutRef = useRef<number | null>(null);
-  const cleanupIntervalRef = useRef<number | null>(null);
-  const scanIntervalRef = useRef<number | null>(null);
+  const connectedDeviceRef = useRef<Device | null>(null);
+  const [status, setStatus] = useState<'scanning' | 'finished' | 'idle' | 'error'>('idle');
+
+  const timeoutRef = useRef<number>(null);
+  const cleanupRef = useRef<number>(null);
+
+  useEffect(() => {
+    async function loadInitalConnections() {
+      const currentlyConnectedDevices = await bleManager.connectedDevices([SERVICE_UUID]);
+      if (currentlyConnectedDevices.length > 0) {
+        setConnectionStatus('Connected');
+        setConnectedDevice(currentlyConnectedDevices[0]);
+      }
+      const now = Date.now();
+      setDetectedSmartPots(
+        currentlyConnectedDevices.map((device) => ({
+          ...device,
+          lastSeen: now,
+        })) as Array<DeviceWithLastSeen>
+      );
+    }
+
+    loadInitalConnections();
+  }, []);
+
+  const startDeviceScan = useCallback(async () => {
+    const onDeviceFound = (error: BleError | null, device: Device | null) => {
+      const now = Date.now();
+      if (error) return;
+      if (!device) return;
+
+      setDetectedSmartPots((prevDevices) => {
+        const devMap: Map<string, DeviceWithLastSeen> = new Map();
+
+        for (const dev of prevDevices) {
+          if (connectedDeviceRef.current && dev.id === connectedDeviceRef.current.id) {
+            // Always keep the connected device, potentially update its latest properties from scan
+            devMap.set(dev.id, { ...dev, ...device, lastSeen: now } as DeviceWithLastSeen);
+          } else if (dev.id !== device.id && now - dev.lastSeen < STALE_DEVICE_TIMEOUT_MS) {
+            // Keep other devices if they are fresh and not the newly found device
+            devMap.set(dev.id, dev);
+          }
+        }
+
+        devMap.set(device.id, { ...device, lastSeen: now } as DeviceWithLastSeen);
+
+        return Array.from(devMap.values());
+      });
+    };
+
+    try {
+      bleManager.startDeviceScan(
+        [SERVICE_UUID],
+        {
+          allowDuplicates: true,
+        },
+        onDeviceFound
+      );
+    } catch (error) {
+      Toast.error(error instanceof Error ? error.message : new Error(String(error)).message);
+    }
+  }, []);
+
+  const stopDeviceScan = () => {
+    bleManager.stopDeviceScan();
+    setStatus('finished');
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+
+    if (cleanupRef.current) {
+      clearInterval(cleanupRef.current);
+      timeoutRef.current = null;
+    }
+  };
+
+  const onConnectionDropped = useCallback((cb: (dev: Device | null) => Promise<void>) => {
+    disconnectCallbackRef.current = cb;
+
+    return () => {
+      disconnectCallbackRef.current = null;
+      return Promise.resolve();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!connectedDeviceRef.current) return;
+
+    const subscription = bleManager.onDeviceDisconnected(
+      connectedDeviceRef.current.id,
+      async (error, device) => {
+        setConnectionStatus('Disconnected');
+        await disconnectCallbackRef.current?.(device);
+      }
+    );
+
+    return () => {
+      subscription.remove();
+    };
+  }, [connectedDevice, onConnectionDropped]);
+
+  const clearOldDevices = useCallback(() => {
+    setDetectedSmartPots((prevDevices) => {
+      const now = Date.now();
+      return prevDevices.filter((device) => {
+        const old = now - device.lastSeen < STALE_DEVICE_TIMEOUT_MS;
+        if (connectedDeviceRef.current && device.id === connectedDeviceRef.current.id) return true;
+        return old;
+      });
+    });
+  }, [STALE_DEVICE_TIMEOUT_MS]);
+
+  const init = () => {
+    if (status == 'scanning') return;
+    function startScan() {
+      if (!timeoutRef.current) {
+        timeoutRef.current = setTimeout(stopDeviceScan, SCAN_TIMEOUT);
+      }
+      setStatus('scanning');
+      startDeviceScan();
+    }
+
+    function startCleanup() {
+      if (!cleanupRef.current) {
+        cleanupRef.current = setInterval(clearOldDevices, CLEANUP_INTERVAL);
+      }
+      clearOldDevices();
+    }
+
+    startScan();
+    startCleanup();
+  };
+
+  async function connect(
+    deviceId: string,
+    onConnect?: ((device: Device) => void) | null,
+    hideErrors: boolean = false
+  ): Promise<Device | null> {
+    try {
+      setConnectionStatus('Connecting');
+      const device = await bleManager.connectToDevice(deviceId, { timeout: 5000 });
+      const isConnected = await device.isConnected();
+      setConnectionStatus(isConnected ? 'Connected' : 'Disconnected');
+      setConnectedDevice(device);
+      connectedDeviceRef.current = device;
+      if (onConnect) {
+        onConnect(device);
+      }
+      return device;
+    } catch (error) {
+      if (!hideErrors)
+        Toast.error(error instanceof Error ? error.message : new Error(String(error)).message);
+      setConnectionStatus('Error');
+      return null;
+    }
+  }
+
+  async function disconnect(device: Device): Promise<Device | null> {
+    try {
+      setConnectionStatus('Disconnecting');
+      if (!connectedDeviceRef.current) {
+        setConnectionStatus('Disconnected');
+        return null;
+      }
+      console.log('disconnected 1');
+
+      const dev = await bleManager.cancelDeviceConnection(device.id);
+      setConnectionStatus('Disconnected');
+      setConnectedDevice(null);
+      connectedDeviceRef.current = null;
+      if (!dev) throw new Error('Unknown error');
+      console.log('disconnected 2');
+
+      return dev;
+    } catch (error) {
+      Toast.error(error instanceof Error ? error.message : new Error(String(error)).message);
+      setConnectionStatus('Connected');
+      return null;
+    }
+  }
 
   const reconnect = useCallback(async (deviceId: string) => {
     setConnectionStatus('Connecting');
@@ -137,187 +321,24 @@ const BLEContext = ({ children }: { children: ReactNode }) => {
     return false;
   }, []);
 
-  const onConnectionDropped = useCallback((cb: (dev: Device | null) => void) => {
-    disconnectCallbackRef.current = cb;
-
-    const unsubscribe = () => {
-      disconnectCallbackRef.current = null;
-    };
-
-    return unsubscribe;
-  }, []);
-
-  useEffect(() => {
-    if (!connectedDevice) return;
-
-    const subscription = bleManager.onDeviceDisconnected(connectedDevice.id, (error, device) => {
-      setConnectionStatus('Disconnected');
-      disconnectCallbackRef.current?.(device);
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, [connectedDevice, onConnectionDropped]);
-
-  async function disconnect(device: Device): Promise<Device | null> {
-    try {
-      setConnectionStatus('Disconnecting');
-
-      const res = await bleManager.cancelDeviceConnection(device.id);
-      setConnectedDevice(null);
-      setConnectionStatus('Disconnected');
-
-      return res;
-    } catch (error) {
-      setConnectionStatus('Error');
-      Toast.error(error instanceof Error ? error.message : new Error(String(error)).message);
-      return null;
-    } finally {
-      refreshDevices();
-    }
-  }
-
-  async function connect(
-    deviceId: string,
-    onConnect?: ((device: Device) => void) | null,
-    hideErrors: boolean = false
-  ): Promise<boolean> {
-    try {
-      setConnectionStatus('Connecting');
-      const device = await bleManager.connectToDevice(deviceId, { timeout: 5000 });
-      const isConnected = await device.isConnected();
-      setConnectionStatus(isConnected ? 'Connected' : 'Disconnected');
-      setConnectedDevice(device);
-      if (onConnect) {
-        onConnect(device);
-      }
-      return true;
-    } catch (error) {
-      if (!hideErrors)
-        Toast.error(error instanceof Error ? error.message : new Error(String(error)).message);
-      setConnectionStatus('Error');
-      return false;
-    }
-  }
-
-  const clearScanInterval = useCallback(() => {
-    if (scanIntervalRef.current) {
-      clearInterval(scanIntervalRef.current);
-      scanIntervalRef.current = null;
-    }
-  }, []);
-
-  // Function to set/reset the main scanning interval
-  const setScanInterval = useCallback(() => {
-    clearScanInterval(); // Ensure any previous interval is cleared before setting a new one
-    scanIntervalRef.current = setInterval(() => {
-      startDeviceScan();
-    }, RUN_SCAN_MS);
-  }, [clearScanInterval]);
-
-  const addDeviceToList = (device: Device) => {
-    setDetectedSmartPots((prevSmartPots) => {
-      const lastSeen = Date.now();
-      const existingIndex = prevSmartPots.findIndex((d) => d.id === device.id);
-
-      const newDevice: DeviceWithLastSeen = { ...device, lastSeen } as DeviceWithLastSeen;
-
-      if (existingIndex > -1) {
-        const updatedDevices = [...prevSmartPots];
-        updatedDevices[existingIndex] = newDevice;
-        return updatedDevices;
-      } else {
-        return [...prevSmartPots, newDevice];
-      }
-    });
-  };
-
-  const clearOldDevices = async () => {
-    const now = Date.now();
-    const connectedDevices = await bleManager.connectedDevices([SERVICE_UUID]);
-
-    setDetectedSmartPots((previous) => {
-      const prev = previous.filter((device) => {
-        const exists = connectedDevices.findIndex((value) => value.id === device.id) > -1;
-        if (exists) return device;
-        return now - device.lastSeen < OLD_DEVICE_THRESHOLD;
-      });
-      return prev;
-    });
-  };
-
-  const refreshDevices = useCallback(async () => {
-    setScanInterval();
-    startDeviceScan();
-  }, [setScanInterval]);
-
-  const startDeviceScan = useCallback(async () => {
-    setStatus('scanning');
-    if (scanTimeoutRef.current) {
-      clearTimeout(scanTimeoutRef.current);
-    }
-
-    scanTimeoutRef.current = setTimeout(() => {
-      bleManager.stopDeviceScan();
-      setStatus('finished');
-      scanTimeoutRef.current = null;
-    }, SCAN_DURATION_MS);
-
-    const deviceFoundListener = (error: BleError | null, scannedDevice: Device | null) => {
-      if (error) {
-        console.error('Scan Error:', error);
-        setStatus('error');
-        return;
-      }
-      if (!scannedDevice || !scannedDevice.id) return;
-      addDeviceToList(scannedDevice);
-    };
-
-    bleManager.startDeviceScan([SERVICE_UUID], { allowDuplicates: true }, deviceFoundListener);
-  }, [addDeviceToList]);
-
-  useEffect(() => {
-    // Set up the interval
-    cleanupIntervalRef.current = setInterval(() => {
-      clearOldDevices();
-    }, RUN_CLEAN_UP_MS);
-
-    scanIntervalRef.current = setInterval(() => {
-      startDeviceScan();
-    }, RUN_SCAN_MS);
-
-    // Return a cleanup function to clear the interval when the component unmounts
-    return () => {
-      if (cleanupIntervalRef.current) {
-        clearInterval(cleanupIntervalRef.current);
-        cleanupIntervalRef.current = null;
-      }
-
-      if (scanIntervalRef.current) {
-        clearInterval(scanIntervalRef.current);
-        scanIntervalRef.current = null;
-      }
-    };
-  }, []);
-
   return (
     <bleContext.Provider
       value={{
+        reconnect,
+        connectedDeviceRef: connectedDeviceRef.current,
+        CHARACTERISTIC_MAP,
+        SERVICE_UUID,
+        requestPermissions,
         bleManager,
         connect,
         connectedDevice,
-        connectionStatus,
         detectedSmartPots,
-        disconnect,
-        refreshDevices,
-        requestPermissions,
-        startDeviceScan,
-        status,
         onConnectionDropped,
-        reconnect,
-        SERVICE_UUID,
-        CHARACTERISTIC_MAP,
+        connectionStatus,
+        init,
+        stopDeviceScan,
+        status,
+        disconnect,
       }}>
       {children}
     </bleContext.Provider>

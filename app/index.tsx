@@ -1,4 +1,3 @@
-import PotDevice from '@/components/custom/pot-device';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -13,14 +12,16 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Text } from '@/components/ui/text';
 import useBluetoothLE from '@/hooks/useBluetoothLE';
+import base64ToUUID from '@/lib/bytearray-to-uuid';
+import { ILocalStoragePlantRecord } from '@/types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFonts } from 'expo-font';
-import { Link, SplashScreen, Stack } from 'expo-router';
+import { Link, SplashScreen, Stack, useRouter } from 'expo-router';
 import { ExtendedStackNavigationOptions } from 'expo-router/build/layouts/StackClient';
-import { Cog, Flower, Loader2, Moon, RotateCcw, Sun } from 'lucide-react-native';
+import { Cog, Flower2Icon, Loader2, Moon, Plus, Sun } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
-import { useEffect } from 'react';
-import { Platform, ScrollView, View } from 'react-native';
+import { Platform, Pressable, RefreshControl, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const SCREEN_OPTIONS: ExtendedStackNavigationOptions = {
@@ -32,8 +33,14 @@ const SCREEN_OPTIONS: ExtendedStackNavigationOptions = {
 export default function Screen() {
   const [loaded, error] = useFonts({
     Quicksand: require('../assets/fonts/Quicksand/Quicksand-VariableFont_wght.ttf'),
+    Momo: require('../assets/fonts/MomoTrust/MomoTrustDisplay-Regular.ttf'),
   });
-  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const [devices, setDevices] = React.useState<
+    Record<string, ILocalStoragePlantRecord & { deviceId?: string }>
+  >({});
+  const { colorScheme } = useColorScheme();
+  const { init, detectedSmartPots, stopDeviceScan, status } = useBluetoothLE();
 
   React.useEffect(() => {
     if (loaded || error) {
@@ -41,63 +48,171 @@ export default function Screen() {
     }
   }, [loaded, error]);
 
+  React.useEffect(() => {
+    if (!loaded) return;
+
+    init();
+
+    return () => {
+      stopDeviceScan();
+    };
+  }, [loaded, error]);
+
+  React.useEffect(() => {
+    if (!loaded) return;
+    console.log(status);
+    loadInDevices();
+  }, [loaded, status]);
+
+  const loadInDevices = async () => {
+    for (const pot of detectedSmartPots) {
+      // convert the bytearray (the smart pots static UUID) back to a c string UUID
+      const uuid = base64ToUUID(pot.manufacturerData as string) as string;
+
+      // Check if our database contains this UUID
+      const data = await AsyncStorage.getItem('plants');
+      let existingDevices: Record<string, ILocalStoragePlantRecord> = {};
+
+      if (!data) return;
+      existingDevices = JSON.parse(data) as Record<string, ILocalStoragePlantRecord>;
+
+      if (existingDevices[uuid] == undefined) return;
+      setDevices((prev) => {
+        return {
+          ...prev,
+          [uuid]: {
+            ...existingDevices[uuid],
+            deviceId: pot.id,
+          },
+        };
+      });
+    }
+  };
+
   if (!loaded && !error) {
     return null;
   }
 
   return (
     <>
-      <Stack.Screen options={SCREEN_OPTIONS} />
-      <View className="flex-1 gap-8 p-4" style={{ paddingTop: insets.top + 16 }}>
-        {/* <Image source={LOGO[colorScheme ?? 'light']} style={IMAGE_STYLE} resizeMode="contain" /> */}
-        <View className="flex h-1/4 items-center gap-4">
-          <View className="flex h-[120px] w-[120px] items-center justify-center rounded-lg border-[1px] border-border">
-            <Flower size={60} color="#22c55e" />
-          </View>
-          <Text>
-            <Text className="font-extrabold" style={{ fontFamily: 'Quicksand' }}>
-              SMART
-            </Text>
-            <Text className="text-quicksand text-green-500" style={{ fontFamily: 'Quicksand' }}>
-              Pot
-            </Text>
+      <Stack
+        screenOptions={{
+          headerBackVisible: false,
+          gestureEnabled: false,
+          headerShown: false,
+          title: 'Home',
+        }}
+      />
+      <View className="mt-full relative h-full px-8">
+        <View className="mt-12 gap-4">
+          <Text
+            className="text-nowrap text-6xl"
+            style={{
+              fontFamily: 'Momo',
+            }}>
+            Welcome!
           </Text>
         </View>
-        <Devices />
+        <View className="my-12 h-full w-full gap-4">
+          <View className="flex-row flex-wrap justify-between">
+            <Text
+              className="text-3xl text-orange-500"
+              style={{
+                fontFamily: 'Quicksand',
+              }}>
+              Your Devices
+            </Text>
+            <Button
+              className="w-[100px]"
+              onPress={() => {
+                router.push({
+                  pathname: '/setup',
+                  params: {
+                    allowExit: 'true',
+                  },
+                });
+              }}>
+              <Plus color={colorScheme === 'dark' ? 'black' : 'white'} />
+              <Text>Add</Text>
+            </Button>
+          </View>
+          <ScrollView
+            className="h-full w-full"
+            refreshControl={
+              <RefreshControl
+                refreshing={status == 'scanning'}
+                onRefresh={() => {
+                  setDevices({});
+                  init();
+                }}
+              />
+            }>
+            <View className="gap-4">
+              {Object.keys(devices).map((id) => {
+                const dev = devices[id];
+                return (
+                  <Pressable
+                    className="w-full rounded-lg border-[1px] border-border bg-muted p-4"
+                    key={id}
+                    onPress={() =>
+                      router.push({
+                        pathname: '/device/[deviceId]',
+                        params: {
+                          deviceId: dev.deviceId || '',
+                        },
+                      })
+                    }>
+                    <View className="flex-row gap-4">
+                      <View>
+                        <View className="h-[40px] w-[40px] items-center justify-center rounded-lg bg-muted-foreground/30">
+                          <Flower2Icon />
+                        </View>
+                      </View>
+                      <View>
+                        <Text className="text-xl">{dev.name}</Text>
+                        <Text className="text-muted-foreground">{dev.plant}</Text>
+                      </View>
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </ScrollView>
+        </View>
       </View>
     </>
   );
 }
 
-const Devices = () => {
-  const { startDeviceScan, refreshDevices, status, detectedSmartPots, connectedDevice } =
-    useBluetoothLE();
-  useEffect(() => {
-    startDeviceScan();
-  }, []);
+// const Devices = () => {
+//   const { startDeviceScan, refreshDevices, status, detectedSmartPots, connectedDevice } =
+//     useBluetoothLE();
+//   useEffect(() => {
+//     startDeviceScan();
+//   }, []);
 
-  if (detectedSmartPots.length == 0 && status !== 'scanning') {
-    return (
-      <View className="w-full items-center gap-4">
-        <Text>No Devices Found</Text>
-        <Button onPress={refreshDevices}>
-          <RotateCcw />
-          <Text>Refresh</Text>
-        </Button>
-      </View>
-    );
-  }
-  return (
-    <ScrollView className="h-3/4 w-full">
-      {status === 'scanning' && <ScanningLoading />}
-      <View className="w-full flex-col gap-2">
-        {detectedSmartPots.map((pot, index) => {
-          return <PotDevice pot={pot} key={index} />;
-        })}
-      </View>
-    </ScrollView>
-  );
-};
+//   if (detectedSmartPots.length == 0 && status !== 'scanning') {
+//     return (
+//       <View className="w-full items-center gap-4">
+//         <Text>No Devices Found</Text>
+//         <Button onPress={refreshDevices}>
+//           <RotateCcw />
+//           <Text>Refresh</Text>
+//         </Button>
+//       </View>
+//     );
+//   }
+//   return (
+//     <ScrollView className="h-3/4 w-full">
+//       {status === 'scanning' && <ScanningLoading />}
+//       <View className="w-full flex-col gap-2">
+//         {detectedSmartPots.map((pot, index) => {
+//           return <PotDevice pot={pot} key={index} />;
+//         })}
+//       </View>
+//     </ScrollView>
+//   );
+// };
 
 const ScanningLoading = () => {
   const { colorScheme } = useColorScheme();

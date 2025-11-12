@@ -5,11 +5,17 @@ import useBluetoothLE from '@/hooks/useBluetoothLE';
 import { router } from 'expo-router';
 import { Loader2, Plug, Unplug } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import { Device } from 'react-native-ble-plx';
 
-const PotDevice = ({ pot }: { pot: Device }) => {
+const PotDevice = ({
+  pot,
+  onConnect: onDeviceCB,
+}: {
+  pot: Device;
+  onConnect: (dev: Device) => Promise<boolean>;
+}) => {
   const { colorScheme } = useColorScheme();
   const { disconnect, connect, connectionStatus } = useBluetoothLE();
 
@@ -22,7 +28,7 @@ const PotDevice = ({ pot }: { pot: Device }) => {
   }
 
   function onConnect(device: Device) {
-    router.push(`/device/${device.id}`);
+    onDeviceCB(device);
   }
 
   return (
