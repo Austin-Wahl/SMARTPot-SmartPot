@@ -98,3 +98,7 @@ export interface SaveData {
   selectedPlant: string;
   measurementSystem: 0 | 1;
 }
+
+export interface IHealthData {
+  health: number;
+}

@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/c
 import { Text } from '@/components/ui/text';
 import useBluetoothLE from '@/hooks/useBluetoothLE';
 import {
+  IHealthData,
   ILightSensorData,
   ISensorData,
   ISoilMoistureAndTemperatureSensorData,
@@ -17,7 +18,7 @@ import {
   Cloud,
   DropletIcon,
   GlassWater,
-  Settings,
+  Heart,
   Sun,
   ThermometerIcon,
 } from 'lucide-react-native';
@@ -141,6 +142,7 @@ const SensorCards = ({ sensorData: data }: { sensorData: Array<ISensorData> }) =
   const [temp, setTemp] = useState<{ connected: boolean; value: number | null }>();
   const [humidity, setHumidity] = useState<{ connected: boolean; value: number | null }>();
   const [moisture, setMoisture] = useState<{ connected: boolean; value: number | null }>();
+  const [health, setHealth] = useState<{ health: number }>();
   const [light, setLight] = useState<{ connected: boolean; value: number | null }>();
   const [waterLevel, setWaterLevel] = useState<{ connected: boolean; value: 'High' | 'Low' }>();
 
@@ -148,45 +150,49 @@ const SensorCards = ({ sensorData: data }: { sensorData: Array<ISensorData> }) =
     try {
       data.forEach((sensorDataRecord) => {
         const sensorName = sensorDataRecord.name;
-
-        switch (sensorName) {
-          case 'Humidity and Temperature':
-            const { humidity, temperature } =
-              sensorDataRecord.data as ITemperatureAndHumiditySensorData;
-            if (humidity !== null && !isNaN(humidity))
-              setHumidity({ connected: sensorDataRecord.connected, value: Math.ceil(humidity) });
-            else {
-              setHumidity({ connected: sensorDataRecord.connected, value: null });
-            }
-            if (temperature !== null && !isNaN(temperature))
-              setTemp({ connected: sensorDataRecord.connected, value: Math.ceil(temperature) });
-            else {
-              setTemp({ connected: sensorDataRecord.connected, value: null });
-            }
-            break;
-          case 'Light':
-            const { light } = sensorDataRecord.data as ILightSensorData;
-            if (light !== null && !isNaN(light)) {
-              setLight({ connected: sensorDataRecord.connected, value: Math.ceil(light) });
-            } else {
-              setLight({ connected: sensorDataRecord.connected, value: null });
-            }
-            break;
-          case 'Soil Moisture':
-            const { moisture } = sensorDataRecord.data as ISoilMoistureAndTemperatureSensorData;
-            if (moisture !== null && !isNaN(moisture)) {
-              setMoisture({ connected: sensorDataRecord.connected, value: moisture });
-            } else {
-              setMoisture({ connected: sensorDataRecord.connected, value: null });
-            }
-            break;
-          case 'Water Level':
-            const { level } = sensorDataRecord.data as IWaterLevelSensor;
-            if (level !== 'High' && level !== 'Low') {
-              setWaterLevel({ connected: sensorDataRecord.connected, value: 'Low' });
-            } else {
-              setWaterLevel({ connected: sensorDataRecord.connected, value: level });
-            }
+        if ((sensorDataRecord as unknown as IHealthData)['health']) {
+          const health = sensorDataRecord as unknown as IHealthData;
+          setHealth(health);
+        } else {
+          switch (sensorName) {
+            case 'Humidity and Temperature':
+              const { humidity, temperature } =
+                sensorDataRecord.data as ITemperatureAndHumiditySensorData;
+              if (humidity !== null && !isNaN(humidity))
+                setHumidity({ connected: sensorDataRecord.connected, value: Math.ceil(humidity) });
+              else {
+                setHumidity({ connected: sensorDataRecord.connected, value: null });
+              }
+              if (temperature !== null && !isNaN(temperature))
+                setTemp({ connected: sensorDataRecord.connected, value: Math.ceil(temperature) });
+              else {
+                setTemp({ connected: sensorDataRecord.connected, value: null });
+              }
+              break;
+            case 'Light':
+              const { light } = sensorDataRecord.data as ILightSensorData;
+              if (light !== null && !isNaN(light)) {
+                setLight({ connected: sensorDataRecord.connected, value: Math.ceil(light) });
+              } else {
+                setLight({ connected: sensorDataRecord.connected, value: null });
+              }
+              break;
+            case 'Soil Moisture':
+              const { moisture } = sensorDataRecord.data as ISoilMoistureAndTemperatureSensorData;
+              if (moisture !== null && !isNaN(moisture)) {
+                setMoisture({ connected: sensorDataRecord.connected, value: moisture });
+              } else {
+                setMoisture({ connected: sensorDataRecord.connected, value: null });
+              }
+              break;
+            case 'Water Level':
+              const { level } = sensorDataRecord.data as IWaterLevelSensor;
+              if (level !== 'High' && level !== 'Low') {
+                setWaterLevel({ connected: sensorDataRecord.connected, value: 'Low' });
+              } else {
+                setWaterLevel({ connected: sensorDataRecord.connected, value: level });
+              }
+          }
         }
       });
     } catch (error) {
@@ -279,6 +285,17 @@ const SensorCards = ({ sensorData: data }: { sensorData: Array<ISensorData> }) =
         <View className="flex w-1/2 items-end">
           <View className="">
             <Text className="text-4xl">{waterLevel?.connected ? `${waterLevel.value}` : 'NC'}</Text>
+          </View>
+        </View>
+      </View>
+      <View className="items-between h-[70px] w-screen flex-row border-border p-4">
+        <View className="flex w-1/2 flex-row items-center gap-2">
+          <Heart color="red" />
+          <Text className="text-sm text-muted-foreground">Health Score</Text>
+        </View>
+        <View className="flex w-1/2 items-end">
+          <View className="">
+            <Text className="text-4xl">{health?.health ? `${health.health}` : '0'}/5</Text>
           </View>
         </View>
       </View>
