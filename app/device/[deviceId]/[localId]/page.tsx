@@ -8,17 +8,26 @@ import {
   ISensorData,
   ISoilMoistureAndTemperatureSensorData,
   ITemperatureAndHumiditySensorData,
+  IWaterLevelSensor,
   TSoilMoistureLevels,
 } from '@/types';
 import { router, useLocalSearchParams } from 'expo-router';
-import { AlertCircle, Cloud, DropletIcon, Sun, ThermometerIcon } from 'lucide-react-native';
+import {
+  AlertCircle,
+  Cloud,
+  DropletIcon,
+  GlassWater,
+  Settings,
+  Sun,
+  ThermometerIcon,
+} from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { Toast } from 'toastify-react-native';
 
 const DevicePage = () => {
   const { connectedDevice, bleManager, SERVICE_UUID, CHARACTERISTIC_MAP } = useBluetoothLE();
-  const { deviceId } = useLocalSearchParams<{ deviceId: string }>();
+  const { deviceId, localId } = useLocalSearchParams<{ deviceId: string; localId: string }>();
   const [sensorData, setSensorData] = useState<Array<ISensorData>>([]);
   const [lastUpdated, setLastUpdated] = useState<number | null>();
 
@@ -95,7 +104,7 @@ const DevicePage = () => {
         ) : (
           <View className="gap-4">
             <SensorCards sensorData={sensorData} />
-            <Card>
+            <Card className="border-0 shadow-none">
               <CardContent>
                 <CardTitle>Last Updated</CardTitle>
                 <CardDescription>
@@ -107,6 +116,20 @@ const DevicePage = () => {
                 </CardDescription>
               </CardContent>
             </Card>
+            <View className="p-4">
+              <Button
+                onPress={() =>
+                  router.push({
+                    pathname: '/device/[deviceId]/[localId]/settings/Settings',
+                    params: {
+                      deviceId: deviceId || '',
+                      localId: localId,
+                    },
+                  })
+                }>
+                <Text>Settings</Text>
+              </Button>
+            </View>
           </View>
         )}
       </ScrollView>
@@ -119,6 +142,7 @@ const SensorCards = ({ sensorData: data }: { sensorData: Array<ISensorData> }) =
   const [humidity, setHumidity] = useState<{ connected: boolean; value: number | null }>();
   const [moisture, setMoisture] = useState<{ connected: boolean; value: number | null }>();
   const [light, setLight] = useState<{ connected: boolean; value: number | null }>();
+  const [waterLevel, setWaterLevel] = useState<{ connected: boolean; value: 'High' | 'Low' }>();
 
   const parseData = () => {
     try {
@@ -156,6 +180,13 @@ const SensorCards = ({ sensorData: data }: { sensorData: Array<ISensorData> }) =
               setMoisture({ connected: sensorDataRecord.connected, value: null });
             }
             break;
+          case 'Water Level':
+            const { level } = sensorDataRecord.data as IWaterLevelSensor;
+            if (level !== 'High' && level !== 'Low') {
+              setWaterLevel({ connected: sensorDataRecord.connected, value: 'Low' });
+            } else {
+              setWaterLevel({ connected: sensorDataRecord.connected, value: level });
+            }
         }
       });
     } catch (error) {
@@ -177,62 +208,77 @@ const SensorCards = ({ sensorData: data }: { sensorData: Array<ISensorData> }) =
   }, [data]);
 
   return (
-    <View className="flex flex-row flex-wrap justify-between overflow-hidden rounded-lg border-[1px] border-border">
-      <View className="h-[120px] w-1/2 flex-row gap-2 border-b-[1px] border-r-[1px] border-border p-4">
-        <View>
-          <ThermometerIcon color="orange" />
-        </View>
-        <View className="">
+    <View>
+      <View className="flex flex-row flex-wrap justify-between overflow-hidden rounded-lg">
+        <View className="h-[120px] w-1/2 flex-row gap-2 border-border p-4">
           <View>
-            <Text className="text-sm text-muted-foreground">Temperature</Text>
+            <ThermometerIcon color="orange" />
           </View>
-          <View className="flex-1 justify-center">
-            <Text className="text-4xl">{temp?.connected ? `${temp.value}°F` : 'NC'}</Text>
+          <View className="">
+            <View>
+              <Text className="text-sm text-muted-foreground">Temperature</Text>
+            </View>
+            <View className="flex-1 justify-center">
+              <Text className="text-4xl">{temp?.connected ? `${temp.value}°F` : 'NC'}</Text>
+            </View>
+          </View>
+        </View>
+        <View className="h-[120px] w-1/2 flex-row gap-2 p-4">
+          <View>
+            <Cloud color="lightblue" />
+          </View>
+          <View className="">
+            <View>
+              <Text className="text-sm text-muted-foreground">Humidity</Text>
+            </View>
+            <View className="flex-1 justify-center">
+              <Text className="text-4xl">{humidity?.connected ? `${humidity.value}%` : 'NC'}</Text>
+            </View>
+          </View>
+        </View>
+        <View className="h-[120px] w-1/2 flex-row gap-2 p-4">
+          <View>
+            <DropletIcon color="lightgreen" />
+          </View>
+          <View className="">
+            <View>
+              <Text className="text-sm text-muted-foreground">Soil Moisture</Text>
+            </View>
+            <View className="flex-1 justify-center">
+              <Text className="text-4xl">
+                {moisture?.connected && moisture.value
+                  ? soilMoistureToString(moisture.value)
+                  : 'NC'}
+              </Text>
+            </View>
+          </View>
+        </View>
+        <View className="h-[120px] w-1/2 flex-row gap-2 p-4">
+          <View>
+            <Sun color="yellow" />
+          </View>
+          <View className="">
+            <View>
+              <Text className="text-sm text-muted-foreground">Light (LUX)</Text>
+            </View>
+            <View className="w-full flex-1 justify-center">
+              <Text className="text-4xl">
+                {light?.connected && light.value !== null
+                  ? `${light.value >= 1000 ? (light.value / 1000).toFixed(2) + 'k' : light.value}`
+                  : 'NC'}
+              </Text>
+            </View>
           </View>
         </View>
       </View>
-      <View className="h-[120px] w-1/2 flex-row gap-2 border-b-[1px] border-r-[1px] border-border p-4">
-        <View>
-          <Cloud color="lightblue" />
+      <View className="items-between h-[70px] w-screen flex-row border-border p-4">
+        <View className="flex w-1/2 flex-row items-center gap-2">
+          <GlassWater color="blue" />
+          <Text className="text-sm text-muted-foreground">Water Level</Text>
         </View>
-        <View className="">
-          <View>
-            <Text className="text-sm text-muted-foreground">Humidity</Text>
-          </View>
-          <View className="flex-1 justify-center">
-            <Text className="text-4xl">{humidity?.connected ? `${humidity.value}%` : 'NC'}</Text>
-          </View>
-        </View>
-      </View>
-      <View className="h-[120px] w-1/2 flex-row gap-2 border-b-[1px] border-r-[1px] border-border p-4">
-        <View>
-          <DropletIcon color="lightgreen" />
-        </View>
-        <View className="">
-          <View>
-            <Text className="text-sm text-muted-foreground">Soil Moisture</Text>
-          </View>
-          <View className="flex-1 justify-center">
-            <Text className="text-4xl">
-              {moisture?.connected && moisture.value ? soilMoistureToString(moisture.value) : 'NC'}
-            </Text>
-          </View>
-        </View>
-      </View>
-      <View className="h-[120px] w-1/2 flex-row gap-2 border-b-[1px] border-r-[1px] border-border p-4">
-        <View>
-          <Sun color="yellow" />
-        </View>
-        <View className="">
-          <View>
-            <Text className="text-sm text-muted-foreground">Light (LUX)</Text>
-          </View>
-          <View className="w-full flex-1 justify-center">
-            <Text className="text-4xl">
-              {light?.connected && light.value !== null
-                ? `${light.value >= 1000 ? (light.value / 1000).toFixed(2) + 'k' : light.value}`
-                : 'NC'}
-            </Text>
+        <View className="flex w-1/2 items-end">
+          <View className="">
+            <Text className="text-4xl">{waterLevel?.connected ? `${waterLevel.value}` : 'NC'}</Text>
           </View>
         </View>
       </View>

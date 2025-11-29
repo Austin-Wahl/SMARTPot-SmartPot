@@ -47,7 +47,8 @@ export interface ISensorData {
   data:
     | ITemperatureAndHumiditySensorData
     | ISoilMoistureAndTemperatureSensorData
-    | ILightSensorData;
+    | ILightSensorData
+    | IWaterLevelSensor;
 }
 
 export interface ITemperatureAndHumiditySensorData {
@@ -64,7 +65,10 @@ export interface ISoilMoistureAndTemperatureSensorData {
 export interface ILightSensorData {
   light: number | null;
 }
-export type TSensorNames = 'Humidity and Temperature' | 'Light' | 'Soil Moisture';
+export interface IWaterLevelSensor {
+  level: 'High' | 'Low';
+}
+export type TSensorNames = 'Humidity and Temperature' | 'Light' | 'Soil Moisture' | 'Water Level';
 
 export interface ISyncPlant {
   deviceName: string;
@@ -87,4 +91,10 @@ export interface ILocalStoragePlantRecord {
   addedAt: number;
   measurementSystem: 0 | 1;
   plant: string;
+}
+
+export interface SaveData {
+  deviceName: string;
+  selectedPlant: string;
+  measurementSystem: 0 | 1;
 }

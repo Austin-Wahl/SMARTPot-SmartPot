@@ -5,7 +5,7 @@ import useBluetoothLE from '@/hooks/useBluetoothLE';
 import { RelativePathString, Stack, useRouter } from 'expo-router';
 import { Loader, RefreshCcw } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Dimensions, Image, RefreshControl, ScrollView, View } from 'react-native';
 import { Device } from 'react-native-ble-plx';
 
@@ -76,6 +76,7 @@ const DevicePairing = ({
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const { bleManager, init, stopDeviceScan, status, detectedSmartPots } = useBluetoothLE();
+  const [devices, setDevices] = useState<Device[]>([]);
 
   useEffect(() => {
     init();

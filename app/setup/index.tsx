@@ -14,7 +14,6 @@ const GettingStartedPage = () => {
           gestureEnabled: false,
           animation: 'fade',
           animationDuration: 100,
-          presentation: 'modal',
         }}
       />
       <View className="mt-full relative mx-8 h-full">

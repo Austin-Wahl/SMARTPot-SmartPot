@@ -38,6 +38,10 @@ export default function RootLayout() {
             <Stack.Screen name="team/index" options={{ title: 'Team' }} />
             <Stack.Screen name="setup" options={{ headerShown: false }} />
             <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="device/[deviceId]/[localId]"
+              options={{ headerBackTitle: 'Home' }}
+            />
           </Stack>
           <ToastManager />
           <PortalHost />

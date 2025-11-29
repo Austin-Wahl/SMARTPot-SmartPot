@@ -60,8 +60,21 @@ export default function Screen() {
 
   React.useEffect(() => {
     if (!loaded) return;
-    console.log(status);
-    loadInDevices();
+    async function test() {
+      const data = await AsyncStorage.getItem('plants');
+      if (!data) {
+        router.replace('/setup');
+        return null;
+      }
+      const existingDevices = JSON.parse(data) as Record<string, ILocalStoragePlantRecord>;
+      if (Object.keys(existingDevices).length == 0) {
+        router.replace('/setup');
+        return null;
+      }
+      loadInDevices();
+    }
+
+    test();
   }, [loaded, status]);
 
   const loadInDevices = async () => {
@@ -156,9 +169,10 @@ export default function Screen() {
                     key={id}
                     onPress={() =>
                       router.push({
-                        pathname: '/device/[deviceId]',
+                        pathname: '/device/[deviceId]/[localId]/page',
                         params: {
                           deviceId: dev.deviceId || '',
+                          localId: id,
                         },
                       })
                     }>

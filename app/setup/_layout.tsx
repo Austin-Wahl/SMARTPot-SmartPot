@@ -12,7 +12,7 @@ const Layout = () => {
   return (
     <>
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="/setup/" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="/setup/" />
       </Stack>
     </>
   );

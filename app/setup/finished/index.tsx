@@ -69,10 +69,9 @@ const Finished = () => {
                 />
               </View>
               <View className="flex-1">
-                <Text className="font-bold">Manually Water</Text>
+                <Text className="font-bold">Update when you like</Text>
                 <Text className="text-sm text-muted-foreground">
-                  You can manually trigger watering! Just set a timer and your SMARTPot will water
-                  your plant.
+                  Our app allows you to easily change your configuration for a range of plants.
                 </Text>
               </View>
             </View>
