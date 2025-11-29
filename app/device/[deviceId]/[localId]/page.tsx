@@ -142,7 +142,7 @@ const SensorCards = ({ sensorData: data }: { sensorData: Array<ISensorData> }) =
   const [temp, setTemp] = useState<{ connected: boolean; value: number | null }>();
   const [humidity, setHumidity] = useState<{ connected: boolean; value: number | null }>();
   const [moisture, setMoisture] = useState<{ connected: boolean; value: number | null }>();
-  const [health, setHealth] = useState<{ health: number }>();
+  const [metadata, setMetadata] = useState<IHealthData>();
   const [light, setLight] = useState<{ connected: boolean; value: number | null }>();
   const [waterLevel, setWaterLevel] = useState<{ connected: boolean; value: 'High' | 'Low' }>();
 
@@ -150,9 +150,9 @@ const SensorCards = ({ sensorData: data }: { sensorData: Array<ISensorData> }) =
     try {
       data.forEach((sensorDataRecord) => {
         const sensorName = sensorDataRecord.name;
-        if ((sensorDataRecord as unknown as IHealthData)['health']) {
-          const health = sensorDataRecord as unknown as IHealthData;
-          setHealth(health);
+        if ((sensorDataRecord as unknown as IHealthData)['metadata']) {
+          const metadata = sensorDataRecord as unknown as IHealthData;
+          setMetadata(metadata);
         } else {
           switch (sensorName) {
             case 'Humidity and Temperature':
@@ -225,7 +225,13 @@ const SensorCards = ({ sensorData: data }: { sensorData: Array<ISensorData> }) =
               <Text className="text-sm text-muted-foreground">Temperature</Text>
             </View>
             <View className="flex-1 justify-center">
-              <Text className="text-4xl">{temp?.connected ? `${temp.value}°F` : 'NC'}</Text>
+              {metadata?.metadata.unitOfMeasurement == 0 ? (
+                <Text className="text-4xl">
+                  {temp?.connected ? `${temp.value! * (9 / 5) + 32}°F` : 'NC'}
+                </Text>
+              ) : (
+                <Text className="text-4xl">{temp?.connected ? `${temp.value}°C` : 'NC'}</Text>
+              )}
             </View>
           </View>
         </View>
@@ -295,7 +301,9 @@ const SensorCards = ({ sensorData: data }: { sensorData: Array<ISensorData> }) =
         </View>
         <View className="flex w-1/2 items-end">
           <View className="">
-            <Text className="text-4xl">{health?.health ? `${health.health}` : '0'}/5</Text>
+            <Text className="text-4xl">
+              {metadata?.metadata.health ? `${metadata.metadata.health}` : '0'}/5
+            </Text>
           </View>
         </View>
       </View>

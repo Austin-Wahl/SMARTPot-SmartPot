@@ -100,5 +100,8 @@ export interface SaveData {
 }
 
 export interface IHealthData {
-  health: number;
+  metadata: {
+    health: number;
+    unitOfMeasurement: 0 | 1;
+  };
 }
